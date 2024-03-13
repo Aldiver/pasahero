@@ -1,4 +1,4 @@
-package com.plcoding.landmarkrecognitiontensorflow.ui.theme
+package com.regionalshs.pasahero.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

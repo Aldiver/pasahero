@@ -1,4 +1,4 @@
-package com.plcoding.landmarkrecognitiontensorflow.ui.theme
+package com.regionalshs.pasahero.ui.theme
 
 import android.app.Activity
 import android.os.Build
@@ -38,7 +38,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun LandmarkRecognitionTensorflowTheme(
+fun PasaheroTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,

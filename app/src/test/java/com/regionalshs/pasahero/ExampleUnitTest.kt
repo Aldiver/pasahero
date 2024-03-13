@@ -1,4 +1,4 @@
-package com.plcoding.landmarkrecognitiontensorflow
+package com.regionalshs.pasahero
 
 import org.junit.Test
 

@@ -13,6 +13,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "LandmarkRecognitionTensorflow"
+rootProject.name = "PasaHero"
 include(":app")
  
