@@ -1,62 +1,75 @@
 package com.regionalshs.pasahero.presentation
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.location.Location
+
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Polyline
+import com.regionalshs.pasahero.domain.GetLocationUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class LiveTrackingViewModel(context: Context) : ViewModel() {
+@RequiresApi(Build.VERSION_CODES.S)
+@HiltViewModel
+class LiveTrackingViewModel @Inject constructor(
+    private val getLocationUseCase: GetLocationUseCase
+) : ViewModel() {
 
-    // FusedLocationProviderClient to retrieve the current location
-    private val fusedLocationClient: FusedLocationProviderClient =
-        LocationServices.getFusedLocationProviderClient(context)
+    private val _viewState: MutableStateFlow<ViewState> = MutableStateFlow(ViewState.Loading)
+    val viewState = _viewState.asStateFlow()
 
-    // MutableStateFlow to represent the tracking state
-    private val _isTracking = MutableStateFlow(false)
-    val isTracking: StateFlow<Boolean> = _isTracking
+    var isLiveTrackingEnabled = false
 
-    // MutableStateFlow to represent the current location
-    private val _currentLocation = MutableStateFlow(LatLng(0.0, 0.0)) // Initial location
-    val currentLocation: StateFlow<LatLng> = _currentLocation
+    private val _trackedLocations = MutableStateFlow<List<LatLng>>(emptyList())
+    val trackedLocations: StateFlow<List<LatLng>> = _trackedLocations
+    init {
+        // Initialize location on startup
+        getLocation()
+    }
 
-    // MutableStateFlow to represent the polylines to draw on the map
-    private val _polylines = MutableStateFlow(emptyList<Polyline>())
-    val polylines: StateFlow<List<Polyline>> = _polylines
-
-    // Function to toggle tracking state
-    fun toggleTracking() {
-        _isTracking.value = !_isTracking.value
-        if (_isTracking.value) {
-            startLocationUpdates()
-        } else {
-            stopLocationUpdates()
+    private fun getLocation() {
+        viewModelScope.launch {
+            getLocationUseCase.invoke().collect { location ->
+                val updatedList = _trackedLocations.value.toMutableList()
+                location?.let { updatedList.add(it) }
+                _trackedLocations.value = updatedList
+            }
         }
     }
 
-    // Function to start location updates
-    @SuppressLint("MissingPermission")
-    private fun startLocationUpdates() {
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location: Location? ->
-                location?.let {
-                    val latLng = LatLng(location.latitude, location.longitude)
-                    _currentLocation.value = latLng
-                    // Start tracking
-                    // You may also want to add logic here to draw polylines, calculate distance, fare, etc.
+    fun handle(event: PermissionEvent) {
+        when (event) {
+            PermissionEvent.Granted -> {
+                viewModelScope.launch {
+                    getLocationUseCase.invoke().collect {
+                        _viewState.value = ViewState.Success(it)
+                    }
                 }
             }
+
+            PermissionEvent.Revoked -> {
+                _viewState.value = ViewState.RevokedPermissions
+            }
+        }
     }
 
-    // Function to stop location updates
-    private fun stopLocationUpdates() {
-        // Stop tracking
+    fun toggleLiveTracking() {
+        isLiveTrackingEnabled = !isLiveTrackingEnabled
     }
+}
+
+sealed interface ViewState {
+    object Loading : ViewState
+    data class Success(val location: LatLng?) : ViewState
+    object RevokedPermissions : ViewState
+}
+
+sealed interface PermissionEvent {
+    object Granted : PermissionEvent
+    object Revoked : PermissionEvent
 }
