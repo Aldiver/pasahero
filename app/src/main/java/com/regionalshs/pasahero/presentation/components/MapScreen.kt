@@ -14,6 +14,14 @@ import com.google.maps.android.compose.Polyline
 import com.regionalshs.pasahero.presentation.LiveTrackingViewModel
 import java.lang.reflect.Modifier
 import androidx.activity.viewModels
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.maps.android.compose.MapUiSettings
+import com.regionalshs.pasahero.R
 
 @Composable
 fun MapScreen(
@@ -21,15 +29,40 @@ fun MapScreen(
     cameraState: CameraPositionState,
     locations: List<LatLng>
 ) {
-    val marker = LatLng(currentPosition.latitude, currentPosition.longitude)
-    GoogleMap(
-//        modifier = Modifier.fillMaxSize(),
-        cameraPositionState = cameraState,
-        properties = MapProperties(
+//    val marker = LatLng(currentPosition.latitude, currentPosition.longitude)
+    val markerPosition = locations.lastOrNull() ?: currentPosition
+
+    val context = LocalContext.current
+
+    val mapProperties by remember {
+        mutableStateOf(MapProperties(
+            mapType = MapType.NORMAL,
+            mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, R.raw.mapstyle_dark),
+            isBuildingEnabled = false,
+            isIndoorEnabled = false,
             isMyLocationEnabled = true,
-            mapType = MapType.HYBRID,
-            isTrafficEnabled = true
+            isTrafficEnabled = false,
+            minZoomPreference = 3f,
+//            maxZoomPreference = 21f
         )
+        )
+    }
+
+    val mapUiSettings by remember {
+        mutableStateOf(
+            MapUiSettings(
+                zoomControlsEnabled = false,
+                zoomGesturesEnabled = true,
+                myLocationButtonEnabled = false,
+                scrollGesturesEnabled = false,
+            )
+        )
+
+    }
+    GoogleMap(
+        cameraPositionState = cameraState,
+        properties = mapProperties,
+        uiSettings = mapUiSettings
     ) {
         Polyline(
             points = locations,
@@ -37,13 +70,21 @@ fun MapScreen(
             width = 5f
         )
         // Marker for current position
-        currentPosition?.let { position ->
-            Marker(
-                state = MarkerState(position = position),
-                title = "Current Position",
-                snippet = "This is your current location",
-                draggable = false
-            )
-        }
+//        currentPosition?.let { position ->
+//            Marker(
+//                state = MarkerState(position = position),
+//                title = "Current Position",
+//                snippet = "This is your current location",
+//                draggable = false
+//            )
+//        }
+
+        Marker(
+            state = MarkerState(position = markerPosition),
+            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW),
+            title = "Current Position",
+            snippet = "This is your current location",
+            draggable = false
+        )
     }
 }

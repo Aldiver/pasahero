@@ -1,6 +1,7 @@
 package com.regionalshs.pasahero.ui.theme
 
 import android.app.Activity
+import android.graphics.Color
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -57,7 +58,9 @@ fun PasaheroTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
+//            window.statusBarColor = colorScheme.primary.toArgb()
+            window.statusBarColor = Color.parseColor("#242F3E")
+            window.navigationBarColor = Color.parseColor("#242F3E")
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
         }
     }

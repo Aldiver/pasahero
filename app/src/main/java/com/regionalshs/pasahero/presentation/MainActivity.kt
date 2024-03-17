@@ -42,11 +42,20 @@ import com.google.maps.android.compose.CameraPositionState
 import com.regionalshs.pasahero.presentation.components.MapScreen
 import com.regionalshs.pasahero.utils.hasLocationPermission
 import android.provider.Settings
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.regionalshs.pasahero.presentation.components.DisplayCard
+import com.regionalshs.pasahero.presentation.components.FareMatrixDialog
+import com.regionalshs.pasahero.presentation.components.GradientButton
+import com.regionalshs.pasahero.presentation.components.ShowSummaryDialog
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -58,7 +67,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val locationViewModel: LiveTrackingViewModel by viewModels()
 
-
         setContent {
             val permissionState = rememberMultiplePermissionsState(
                 permissions = listOf(
@@ -67,8 +75,14 @@ class MainActivity : ComponentActivity() {
                 )
             )
 
+            var fareMatrix by remember { mutableStateOf(true) }
             val viewState by locationViewModel.viewState.collectAsStateWithLifecycle()
             val trackedLocations by locationViewModel.trackedLocations.collectAsStateWithLifecycle()
+            val isLiveTrackingEnabledState by locationViewModel.isLiveTrackingEnabled.collectAsState()
+            val distance by locationViewModel.distanceCovered.collectAsState()
+            val fare by locationViewModel.fare.collectAsState()
+            val elapsedTime by locationViewModel.duration.collectAsState()
+            val displaySummary by locationViewModel.isJourneyEnded.collectAsState()
 
             PasaheroTheme {
                 LaunchedEffect(!hasLocationPermission()) {
@@ -141,29 +155,81 @@ class MainActivity : ComponentActivity() {
                             LaunchedEffect(key1 = currentLoc) {
                                 cameraState.centerOnLocation(currentLoc)
                             }
-
-                            Column {
-                                MapScreen(
-                                    currentPosition = LatLng(
-                                        currentLoc.latitude,
-                                        currentLoc.longitude
-                                    ),
-                                    cameraState = cameraState,
-                                    locations = trackedLocations
-                                )
-
-                                // Button for starting/stopping live tracking
-                                FloatingActionButton(
-                                    onClick = { locationViewModel.toggleLiveTracking() },
-                                    modifier = Modifier
-                                        .align(Alignment.End)
-                                        .padding(16.dp)
+                                Box(
+                                    modifier = Modifier.fillMaxSize()
                                 ) {
-                                    Text(text = if (locationViewModel.isLiveTrackingEnabled) "Stop Tracking" else "Start Tracking")
+                                    MapScreen(
+                                        currentPosition = LatLng(
+                                            currentLoc.latitude,
+                                            currentLoc.longitude
+                                        ),
+                                        cameraState = cameraState,
+                                        locations = trackedLocations
+                                    )
+
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(24.dp),
+                                        verticalArrangement = Arrangement.SpaceBetween,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        if(isLiveTrackingEnabledState){
+                                            DisplayCard(
+                                                distance = distance.toFloat(),
+                                                fare = fare.toFloat(),
+                                                elapsedTime = elapsedTime,
+                                                gradientColors = listOf(
+                                                    Color(0xFFC6FFDD), // Hex value: #C6FFDD
+                                                    Color(0xFFFBD786), // Hex value: #FBD786
+                                                    Color(0xFFf7797d)  // Hex value: #f7797d
+                                                )
+                                            )
+                                        }else{
+                                            Spacer(modifier = Modifier.size(100.dp))
+                                        }
+
+                                        GradientButton(
+                                            text = if (isLiveTrackingEnabledState) "END" else "BEGIN",
+                                            textColor = Color.Black,
+                                            gradient = Brush.horizontalGradient(
+                                                colors = listOf(
+                                                    Color(0xFFC6FFDD), // Hex value: #C6FFDD
+                                                    Color(0xFFFBD786), // Hex value: #FBD786
+                                                    Color(0xFFf7797d)  // Hex value: #f7797d
+                                                )
+                                            ),
+                                            onClick = { locationViewModel.toggleLiveTracking() },
+                                        )
+                                    }
+
+                                    if(displaySummary){
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(Color.Black.copy(alpha = 0.6f))
+                                                .clickable { /* Do nothing on click */ },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            ShowSummaryDialog(
+                                                distance = distance.toFloat(),
+                                                fare = fare.toFloat(),
+                                                elapsedTime = elapsedTime,
+                                                onClose = { locationViewModel.clearTrackedLocations() }
+                                            )
+                                        }
+                                    }
                                 }
-                            }
                         }
                     }
+                }
+
+                if(fareMatrix){
+                    FareMatrixDialog(
+                        onClose = {
+                            fareMatrix = false
+                        }
+                    )
                 }
             }
         }
