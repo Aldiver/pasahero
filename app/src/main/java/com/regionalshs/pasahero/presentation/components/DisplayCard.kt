@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.regionalshs.pasahero.utils.formatDuration
 
 @Composable
 fun DisplayCard(
@@ -120,7 +121,7 @@ fun DisplayCard(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "$elapsedTime seconds",
+                            text = formatDuration(elapsedTime),
                             fontSize = 20.sp
                         )
                         Text(

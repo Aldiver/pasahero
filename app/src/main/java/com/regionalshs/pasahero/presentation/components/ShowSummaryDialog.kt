@@ -19,13 +19,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.android.gms.maps.model.LatLng
+import com.regionalshs.pasahero.utils.formatDuration
 
 @Composable
 fun ShowSummaryDialog(
     distance: Float,
     fare: Float,
     elapsedTime: Long,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    locations: List<LatLng>
 ) {
     // Assume dialog implementation here
     Card(
@@ -47,7 +50,10 @@ fun ShowSummaryDialog(
                 fontSize = 45.sp,
             )
             Text("Distance: ${"%.2f".format(distance)} km", fontSize = 20.sp)
-            Text("Duration - $elapsedTime seconds", fontSize = 20.sp)
+            Text("Duration: ${formatDuration(elapsedTime)}", fontSize = 20.sp)
+            Text("Initial Lat: ${locations.firstOrNull()?.latitude ?: 0.0}, ${locations.firstOrNull()?.longitude ?: 0.0}", fontSize = 16.sp)
+            Text("Last Lat: ${locations.lastOrNull()?.latitude ?: 0.0}, ${locations.lastOrNull()?.longitude ?: 0.0}", fontSize = 16.sp)
+
             Spacer(modifier = Modifier.size(30.dp))
 
             Button(

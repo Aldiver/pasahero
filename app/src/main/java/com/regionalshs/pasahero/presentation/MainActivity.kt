@@ -215,7 +215,8 @@ class MainActivity : ComponentActivity() {
                                                 distance = distance.toFloat(),
                                                 fare = fare.toFloat(),
                                                 elapsedTime = elapsedTime,
-                                                onClose = { locationViewModel.clearTrackedLocations() }
+                                                onClose = { locationViewModel.clearTrackedLocations() },
+                                                locations = trackedLocations
                                             )
                                         }
                                     }
